@@ -1,5 +1,4 @@
 import { User, WS } from "../types/events";
-import crypto from 'node:crypto';
 
 const users: User[] = [];
 

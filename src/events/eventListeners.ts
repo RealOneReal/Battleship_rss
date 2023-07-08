@@ -1,10 +1,11 @@
-import { addRoom } from "../models/rooms";
+import { addUserShips, isGameReady, useAttack } from "../models/games";
+import { addRoom, updateRoom } from "../models/rooms";
 import { addUser } from "../models/users";
-import { Room, User, WS } from "../types/events";
-import { emitRegistration, emitUpdateRoom} from "./eventEmitters";
+import { Attack, Room, User, WS } from "../types/events";
+import { emitAttack, emitCreateGame, emitRegistration, emitStartGame, emitTurn, emitUpdateRoom} from "./eventEmitters";
 
 const handleRegistration = (socket: WS, data:User) => {
-    const user = addUser(socket as WS, data);
+    const user = addUser(socket, data);
     const processedData = { name: user.name, index: user.index, error: false }
     emitRegistration(socket, processedData);
     // add helpers for cheking empty room emitUpdateRoom(socket, room);
@@ -13,15 +14,22 @@ const handleRegistration = (socket: WS, data:User) => {
 const handleCreateRoom = (socket: WS, data: Room) => {
    const room = addRoom(socket.id);
    emitUpdateRoom(null, room);
+
 }
-const handleAddUserToRoom = () => {
-    
+const handleAddUserToRoom = (socket: WS, data: { indexRoom: number }) => {
+    const updatedRoom = updateRoom(socket.id, data.indexRoom);
+    emitCreateGame(updatedRoom);
 }
-const handleAddShips = () => {
-    
+const handleAddShips = (socket: WS, data: any) => {
+    const result = addUserShips(data.gameId, socket.id, data);
+    if(isGameReady(data.gameId)) {
+        emitStartGame(data.gameId);
+        emitTurn(data.gameId);
+    }
 }
-const handleAttack = () => {
-    
+const handleAttack = (socket: WS, data: Attack) => {
+    const result = useAttack(data);
+    emitAttack(result, data);
 }
 
 const handleRandomAttack = () => {
