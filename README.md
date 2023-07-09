@@ -19,6 +19,8 @@
 
 * App served @ `http://localhost:8181` without nodemon
 
+
+*** Sockets sometimes lose connection. When checking, please make sure in the logs that the necessary number of sockets are connected so that the game can be correctly tested. Thank you for your attention. ***
 ---
 
 **All commands**
