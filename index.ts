@@ -1,7 +1,7 @@
 import { httpServer } from "./src/http_server/index";
 import { WebSocketServer } from "ws";
 import crypto from 'node:crypto';
-import { Message, WS } from './src/types/events';
+import { Message } from './src/types/events';
 import { eventListeners } from './src/events/eventListeners';
 
 const HTTP_PORT = 8181;
@@ -15,7 +15,7 @@ wss.on("connection", (socket ) => {
     (socket as any).id  = index;
     socket.on("message", (rawData) => {
         const msg = JSON.parse(rawData.toString()) as Message;
-        const { type, data, id } = msg;
+        const { type, data } = msg;
         if(eventListeners[type]) {
             eventListeners[type](socket, data && JSON.parse(data));
         }

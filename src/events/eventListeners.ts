@@ -1,14 +1,17 @@
-import { addUserShips, isGameReady, useAttack } from "../models/games";
+import { addUserShips, getGame, isGameReady, useAttack } from "../models/games";
 import { addRoom, updateRoom } from "../models/rooms";
-import { addUser } from "../models/users";
+import { addUser, getUserById } from "../models/users";
 import { Attack, Room, User, WS } from "../types/events";
-import { emitAttack, emitCreateGame, emitRegistration, emitStartGame, emitTurn, emitUpdateRoom} from "./eventEmitters";
+import { emitAttack, emitCreateGame, emitFinish, emitRegistration, emitStartGame, emitTurn, emitUpdateRoom, emitUpdateWinners} from "./eventEmitters";
 
 const handleRegistration = (socket: WS, data:User) => {
     const user = addUser(socket, data);
+    if (!user) {
+        emitRegistration(socket, { errorText: 'For login add userName and password', error: true });
+        return;
+    }
     const processedData = { name: user.name, index: user.index, error: false }
     emitRegistration(socket, processedData);
-    // add helpers for cheking empty room emitUpdateRoom(socket, room);
 }
 
 const handleCreateRoom = (socket: WS, data: Room) => {
@@ -18,22 +21,50 @@ const handleCreateRoom = (socket: WS, data: Room) => {
 }
 const handleAddUserToRoom = (socket: WS, data: { indexRoom: number }) => {
     const updatedRoom = updateRoom(socket.id, data.indexRoom);
+    if(!updatedRoom) return;
     emitCreateGame(updatedRoom);
 }
 const handleAddShips = (socket: WS, data: any) => {
-    const result = addUserShips(data.gameId, socket.id, data);
+    addUserShips(data.gameId, socket.id, data);
     if(isGameReady(data.gameId)) {
         emitStartGame(data.gameId);
         emitTurn(data.gameId);
     }
 }
 const handleAttack = (socket: WS, data: Attack) => {
+    const game = getGame(data.gameId);
+    if(socket.id !== game.turn) return;
     const result = useAttack(data);
     emitAttack(result, data);
+    if(result === 'miss') {
+        emitTurn(data.gameId, true);
+        return;
+    }
+    if( result === 'finishGame') {
+        emitFinish(data.gameId, data.indexPlayer);
+        const user = getUserById(data.indexPlayer);
+        emitUpdateWinners(data.gameId, user.name);
+        return;
+    }
+    emitTurn(data.gameId);
 }
 
-const handleRandomAttack = () => {
-    
+const handleRandomAttack = (socket: WS, data: Attack) => {
+    const game = getGame(data.gameId);
+    if(socket.id !== game.turn) return;
+    const result = useAttack(data);
+    emitAttack(result, data);
+    if(result === 'miss') {
+        emitTurn(data.gameId, true);
+        return;
+    }
+    if( result === 'finishGame') {
+        emitFinish(data.gameId, data.indexPlayer);
+        const user = getUserById(data.indexPlayer);
+        emitUpdateWinners(data.gameId, user.name);
+        return;
+    }
+    emitTurn(data.gameId);
 }
 
 export const eventListeners = {
@@ -43,5 +74,4 @@ export const eventListeners = {
     add_ships: handleAddShips,
     attack: handleAttack,
     randomAttack: handleRandomAttack,
-
 };

@@ -28,7 +28,6 @@ export const addUserShips = (gameId:number, userId: string, data: Ships) => {
     placeShips(grid,ships);
     game.playerShips.push({ ships, id: userId });
     game.battlefields.push({ userId, grid });
-    console.log(grid);
     game.battlefields.push({ grid: [], userId})
 };
 
@@ -78,6 +77,10 @@ function placeShips(grid: Cell[][], ships: Ship[]): void {
   }
 
 function processAttack(grid: Cell[][], coords: Attack): AttackResult {
+    if(coords.x === undefined || coords.y === undefined) {
+      coords.x = Math.floor(Math.random() * 12);
+      coords.y = Math.floor(Math.random() * 12);
+    }
     const { x, y } = coords;
     const cell = grid[x][y];
 
@@ -88,11 +91,13 @@ function processAttack(grid: Cell[][], coords: Attack): AttackResult {
     cell.hit = true;
 
     let isKilled = true;
+    let liveShips = 0;
 
     for (const row of grid) {
         for (const cell of row) {
-            if (cell.ship  && !cell.hit) {
+            if (cell.ship && !cell.hit) {
                 isKilled = false;
+                liveShips++;
                 break;
             }
         }
@@ -101,5 +106,9 @@ function processAttack(grid: Cell[][], coords: Attack): AttackResult {
         }
     }
 
+    if (liveShips === 0) {
+      return "finishGame";
+    }
+    
     return isKilled ? "killed" : "shot";
 }

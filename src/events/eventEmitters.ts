@@ -1,6 +1,8 @@
 import { Attack, AttackResult, Room, UserResponse, WS } from "../types/events";
 import { wss } from '../../index';
-import { getGame, getUserShips } from "../models/games";
+import { getGame } from "../models/games";
+import { addWin, getWinners } from "../models/users";
+
 export const emitRegistration = (socket:WebSocket, data: UserResponse) => {
     const msg = {
         type: 'reg',
@@ -9,9 +11,25 @@ export const emitRegistration = (socket:WebSocket, data: UserResponse) => {
     }
     socket.send(JSON.stringify(msg));
 }
-export const emitUpdateWinners = () => {
-    
-}
+export const emitUpdateWinners = (gameId: number, userName: string) => {
+    const game = getGame(gameId);
+    addWin(userName);
+    const winners = getWinners();
+    const msg = {
+        type:'update_winners',
+        id: 0,
+        data: JSON.stringify(winners),
+    }
+    game.playerShips.forEach((userGame) => {
+        wss.clients.forEach((socket) => {
+            if((socket as any).id === userGame.id) {
+                socket.send(JSON.stringify(msg));
+            }
+            
+        })
+    })
+};
+
 export const emitCreateGame = (data:Room) => {
     const userIds = data.roomUsers.map(user => user.index);
     userIds.forEach(id => {
@@ -43,6 +61,7 @@ export const emitUpdateRoom = (socket: WS | null, room: Room) => {
 }
 export const emitStartGame = (gameId: number) => {
     const game = getGame(gameId);
+    
     game.playerShips.forEach((userGame) => {
         wss.clients.forEach((socket) => {
             if((socket as any).id === userGame.id) {
@@ -73,13 +92,18 @@ export const emitAttack = (result: AttackResult, data: Attack) => {
     })
 };
 
-export const emitTurn = (gameId) => {
+export const emitTurn = (gameId, nextPlayer:boolean = false) => {
     const game = getGame(gameId);
     let turn = game.turn;
     if(!turn) {
         game.turn = game.playerShips[0].id;
         turn = game.playerShips[0].id
     };
+    if(nextPlayer) {
+        const nextTurn = game.playerShips.find(i => i.id !== turn).id;
+    turn = nextTurn;
+    game.turn = nextTurn;
+    }
     const msg = {
         type: 'turn',
         id: 0,
@@ -94,7 +118,19 @@ export const emitTurn = (gameId) => {
     });
 };
 
-export const emitFinish = () => {
-    
+export const emitFinish = (gameId: number, winnerId: string) => {
+    const game = getGame(gameId);
+    const msg = {
+        type:'finish',
+        id: 0,
+        data: JSON.stringify({ winPlayer: winnerId }),
+    }
+    game.playerShips.forEach((userGame) => {
+        wss.clients.forEach((socket) => {
+            if((socket as any).id === userGame.id) {
+                socket.send(JSON.stringify(msg));
+            }
+        })
+    })
 }
 

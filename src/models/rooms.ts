@@ -11,9 +11,12 @@ export const addRoom = (id: string):Room => {
     return room;
 };
 
-export const updateRoom = (userID: string, roomId: number) => {
+export const updateRoom = (userID: string, roomId: number): Room | null => {
     const updatedRoom = rooms[roomId];
     const user = getUserById(userID);
+    if(updatedRoom.roomUsers[0].index === userID) {
+        return null;
+    }
     updatedRoom.roomUsers.push(user);
     rooms.splice(roomId, 1);
     return updatedRoom;

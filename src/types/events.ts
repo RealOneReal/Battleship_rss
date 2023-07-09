@@ -12,7 +12,7 @@ export interface User {
 
 export interface UserResponse {
     error: boolean;
-    name: string;
+    name?: string;
     errorText?: string;
 }
 
@@ -29,7 +29,7 @@ export interface Game {
     id: number;
     playerShips: Ships[];
     turn: string;
-    battlefields: Battlefield[]  
+    battlefields: Battlefield[];
 }
 
 export interface Ship {
@@ -63,4 +63,8 @@ export interface Cell {
     hit: boolean;
 }
 
-export type AttackResult = "miss" | "killed" | "shot";
+export type AttackResult = "miss" | "killed" | "shot" | "finishGame";
+export interface Winner {
+    name: string;
+    wins: number;
+}
