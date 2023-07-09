@@ -1,6 +1,7 @@
 import { Attack, AttackResult, Cell, Game, Ship, Ships } from "../types/events";
 
 const games:Game[] = [];
+const GRID_SIZE = 10;
 
 export const getGame = (id) => {
     let game = games.find(game => game.id === id);
@@ -44,11 +45,10 @@ export const useAttack = (attack: Attack) => {
 }
 
 const createEmptyGrid = () => {
-    const gridSize = 12;
     const grid:Cell[][] = [];
-    for (let x = 0; x < gridSize; x++) {
+    for (let x = 0; x < GRID_SIZE; x++) {
         const row = [];
-        for (let y = 0; y < gridSize; y++) {
+        for (let y = 0; y < GRID_SIZE; y++) {
           row.push({ x: x, y: y, ship: false, hit: false });
         }
         grid.push(row);
@@ -78,8 +78,8 @@ function placeShips(grid: Cell[][], ships: Ship[]): void {
 
 function processAttack(grid: Cell[][], coords: Attack): AttackResult {
     if(coords.x === undefined || coords.y === undefined) {
-      coords.x = Math.floor(Math.random() * 12);
-      coords.y = Math.floor(Math.random() * 12);
+      coords.x = Math.floor(Math.random() * GRID_SIZE);
+      coords.y = Math.floor(Math.random() * GRID_SIZE);
     }
     const { x, y } = coords;
     const cell = grid[x][y];
